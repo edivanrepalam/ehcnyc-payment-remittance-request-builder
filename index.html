@@ -196,10 +196,12 @@ button{font:inherit}
       <div class="card-head"><h2>Patient and payment details</h2></div>
       <div class="grid">
         <div class="field span-3"><label>Patient name <span class="req">*</span></label><input data-k="name" placeholder="e.g. Jane Doe" autocomplete="off"></div>
-        <div class="field span-2"><label>Medication/Others</label><select data-k="med"></select></div>
+        <div class="field"><label>Medication/Others</label><select data-k="med"></select></div>
+        <div class="field"><label>Form</label><select data-k="form" data-opts="forms" data-ph="Select"></select></div>
         <div class="field"><label class="prog-label">Program (mL / mg)</label><select data-k="program"></select></div>
         <div class="field"><label>Pharmacy</label><select data-k="pharmacy" data-opts="pharmacies" data-ph="Select"></select></div>
-        <div class="field"><label>Supplies</label><select data-k="supplies" data-opts="supplies" data-ph="Select"></select></div>
+        <div class="field wl-hide"><label>Supplies</label><select data-k="supplies" data-opts="supplies" data-ph="Select"></select></div>
+        <div class="field wl-only" hidden><label>Benefits</label><select data-k="benefit" data-opts="benefits" data-ph="Select"></select></div>
         <div class="field"><label>Shipping</label><select data-k="shipping" data-opts="shipping" data-ph="Select"></select></div>
         <div class="field hl"><label># of shipments</label><input data-k="shipments" type="number" min="0" placeholder="e.g. 2"></div>
         <div class="field"><label>Signature</label><select data-k="signature" data-opts="signatures"></select></div>
@@ -215,6 +217,7 @@ button{font:inherit}
         <div class="field span-3"><label>Payment link</label><input data-k="payUrl" type="url" placeholder="https://buy.stripe.com/...">
           <p class="help">Shows as a "Click here to remit payment" button.</p></div>
         <div class="field span-3"><label>Once payment is received</label><textarea data-k="afterPay" rows="3" placeholder="What happens next, e.g. Your order will be released for fulfillment. (optional)"></textarea></div>
+        <div class="field span-3 wl-only" hidden><label>Directions for use</label><input data-k="directions" placeholder="e.g. Take 2 capsules daily with food"></div>
         <div class="field span-3"><label>Comments</label><textarea data-k="comments" rows="3" placeholder="Anything else the patient should know (optional)"></textarea></div>
       </div>
     </div>
@@ -306,25 +309,26 @@ const CONFIG = {
       { name: 'MICB12', form: 'Gel Troches', programs: ['30 troches'] }
     ]},
     { group: 'Wellness & Vitality Collection', pharmacy: 'Strive Pharmacy', items: [
-      { name: 'Fuel+', form: 'Meal Replacement', programs: ['30 servings'] },
-      { name: 'Digest', form: 'Veggie Capsules', programs: ['30 ct.'] },
-      { name: 'Control', form: 'Veggie Capsules', programs: ['30 ct.'] },
-      { name: 'Regen+', form: 'Veggie Capsules', programs: ['60 ct.'] },
-      { name: 'Slumber', form: 'Veggie Capsules', programs: ['90 ct.'] },
-      { name: 'Restore', form: 'Veggie Capsules', programs: ['90 ct.'] },
-      { name: 'Shield', form: 'Veggie Capsules', programs: ['60 ct.'] },
-      { name: 'Daily', form: 'Veggie Capsules', programs: ['60 ct.'] },
-      { name: 'Balance', form: 'Veggie Capsules', programs: ['60 ct.'] },
-      { name: 'Boost', form: 'Veggie Capsules', programs: ['90 ct.'] },
-      { name: 'Grow', form: 'Veggie Capsules', programs: ['90 ct.'] },
+      { name: 'Fuel+', form: 'Meal Replacement Shake', programs: ['30 servings (10-15 days supply)'], benefit: 'Salted Caramel Flavor' },
+      { name: 'Digest', form: 'Veggie Capsules', programs: ['30 ct.'], benefit: 'Gut Health Support' },
+      { name: 'Control', form: 'Veggie Capsules', programs: ['30 ct.'], benefit: 'Appetite Support' },
+      { name: 'Regen+', form: 'Veggie Capsules', programs: ['60 ct.'], benefit: 'Promotes NAD+, Boost Energy & Promotes Anti-Aging' },
+      { name: 'Slumber', form: 'Veggie Capsules', programs: ['90 ct.'], benefit: 'Deep Sleep Support' },
+      { name: 'Restore', form: 'Veggie Capsules', programs: ['90 ct.'], benefit: 'Sleep & Calm Support' },
+      { name: 'Shield', form: 'Veggie Capsules', programs: ['60 ct.'], benefit: 'Daily Immune Booster' },
+      { name: 'Daily', form: 'Veggie Capsules', programs: ['60 ct.'], benefit: 'Multi Vitamin & Metabolism Boost' },
+      { name: 'Balance', form: 'Veggie Capsules', programs: ['60 ct.'], benefit: 'Hormone Support for Women' },
+      { name: 'Boost', form: 'Veggie Capsules', programs: ['90 ct.'], benefit: 'Testosterone Support for Men' },
+      { name: 'Grow', form: 'Veggie Capsules', programs: ['90 ct.'], benefit: 'Hair, Skin, & Nails' },
       { name: 'Clear Protein Hydration', form: 'Powder', programs: ['30 servings, Coconut Mojito'] },
-      { name: 'CreatinePowerline', form: 'Powder', programs: ['60 servings, Unflavored'] }
+      { name: 'CreatinePowerline', form: 'Powder', programs: ['60 servings, Unflavored'], benefit: 'Support Hydration Balance & Lean Muscles, Boost Cellular Energy & Promotes Cognitive Performance' }
     ]}
   ],
   pharmacies: ['Hallandale Pharmacy', 'Strive Pharmacy', 'Vios Compounding Pharmacy', 'The Chemist Shop', 'Wells Pharmacy', 'Striker Pharmacy'],
   signatures: ['No Signature', 'Indirect Signature', 'Direct Signature'],
+  wellnessGroup: 'Wellness & Vitality Collection',   // these products hide Supplies and show Benefits + Directions for use
   supplies: ['Syringes', 'Alcohol swabs', 'Syringes + alcohol swabs', 'N/A'],
-  shipping: ['FedEx', 'UPS cold-pack', 'FedEx cold-pack'],
+  shipping: ['FedEx', 'UPS cold-pack', 'FedEx cold-pack', 'USPS'],
   fees: ['$45', '$60', '$200', '$100'],
   signature: {
     rating: '4.9',
@@ -346,6 +350,8 @@ const PRODUCTS = CONFIG.catalog.flatMap(g => g.items.map(p => ({
   programs: p.programs.map(x => (typeof x === 'string' ? { label: x } : x))
 })));
 PRODUCTS.forEach((p, i) => { p.id = String(i); });
+CONFIG.benefits = [...new Set(PRODUCTS.map(p => p.benefit).filter(Boolean))];
+CONFIG.forms = [...new Set(PRODUCTS.map(p => p.form).filter(Boolean))];
 
 /* ---------- helpers ---------- */
 const $ = (s, r = document) => r.querySelector(s);
@@ -413,6 +419,12 @@ function syncProduct() {
   const shared = p ? [...new Set(p.programs.map(x => x.pharmacy).filter(Boolean))] : [];
   $('[data-k=pharmacy]').value = p ? (p.pharmacy || (shared.length === 1 ? shared[0] : '')) : '';
   if (p && p.programs.length === 1) syncProgram();
+  $('[data-k=form]').value = p ? (p.form || '') : '';
+  const wellness = !!p && p.group === CONFIG.wellnessGroup;
+  $$('.wl-hide').forEach(el => { el.hidden = wellness; });
+  $$('.wl-only').forEach(el => { el.hidden = !wellness; });
+  if (wellness) { $('[data-k=supplies]').value = ''; $('[data-k=benefit]').value = p.benefit || ''; }
+  else { $('[data-k=benefit]').value = ''; $('[data-k=directions]').value = ''; }
 }
 
 // Program changed: some programs (e.g. NAD+) ship from a specific pharmacy
@@ -527,11 +539,14 @@ function buildEmailBody(s) {
   const logo = `<img src="${esc(logoSrc)}" alt="EHCNYC Elite Health Center NYC" width="140" style="display:block;width:140px;max-width:140px;height:auto;border:0;outline:none;text-decoration:none;">`;
   const P = (html, pt = 12) => `<div style="font-size:15px;line-height:23px;color:${C.muted};padding-top:${pt}px;">${html}</div>`;
 
+  const wellness = (PRODUCTS[s.med] || {}).group === CONFIG.wellnessGroup;
   const details = kvPanel([
     ['Medication/Others', s.medName],
+    ['Form', s.form],
+    ['Benefits', wellness ? s.benefit : ''],
     ['Program', (s.program || '').replace(/-/g, '\u2011')],   // non-breaking hyphen keeps "2mL-20mg" together
     ['Pharmacy', s.pharmacy],
-    ['Supplies', s.supplies],
+    ['Supplies', wellness ? '' : s.supplies],
     ['Shipping', s.shipping],
     ['Number of shipments', s.shipments],
     ['Signature', s.signature],
@@ -545,6 +560,8 @@ ${payUrl ? spacer(s.remit ? 16 : 0) + button(payUrl, 'Click here to remit paymen
 ${textPanel(s.afterPay, true)}` : '';
   const comments = s.comments ? `${heading('Comments')}
 ${textPanel(s.comments, false)}` : '';
+  const directions = wellness && s.directions ? `${heading('Directions for use')}
+${textPanel(s.directions, false)}` : '';
   const replyHref = `mailto:${CONFIG.signature.email}?subject=${encodeURIComponent(CONFIG.replySubject)}`;
 
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.page}" style="background-color:${C.page};background-image:linear-gradient(160deg,#d3eaf2 0%,#eef6f9 45%,#d8e9ef 100%);">
@@ -575,6 +592,7 @@ ${button(replyHref, 'Click here to reply to this email', false)}
 ${P(`${esc(CONFIG.clinicName)} appreciates your business and continued loyalty. &#11088;&#65039;`, 0)}
 ${P('Thank you,', 6)}
 </td></tr>
+${directions}
 ${comments}
 
 ${signatureBlock(logoSrc)}
