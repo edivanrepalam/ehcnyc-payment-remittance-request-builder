@@ -196,17 +196,17 @@ button{font:inherit}
       <div class="card-head"><h2>Patient and payment details</h2></div>
       <div class="grid">
         <div class="field span-3"><label>Patient name <span class="req">*</span></label><input data-k="name" placeholder="e.g. Jane Doe" autocomplete="off"></div>
-        <div class="field"><label>Medication/Others</label><select data-k="med"></select></div>
-        <div class="field"><label>Form</label><select data-k="form" data-opts="forms" data-ph="Select"></select></div>
+        <div class="field span-2"><label>Medication/Others</label><select data-k="med"></select></div>
         <div class="field"><label class="prog-label">Program (mL / mg)</label><select data-k="program"></select></div>
         <div class="field"><label>Pharmacy</label><select data-k="pharmacy" data-opts="pharmacies" data-ph="Select"></select></div>
         <div class="field wl-hide"><label>Supplies</label><select data-k="supplies" data-opts="supplies" data-ph="Select"></select></div>
         <div class="field wl-only" hidden><label>Benefits</label><select data-k="benefit" data-opts="benefits" data-ph="Select"></select></div>
         <div class="field"><label>Shipping</label><select data-k="shipping" data-opts="shipping" data-ph="Select"></select></div>
         <div class="field hl"><label># of shipments</label><input data-k="shipments" type="number" min="0" placeholder="e.g. 2"></div>
-        <div class="field"><label>Signature</label><select data-k="signature" data-opts="signatures"></select></div>
         <div class="field"><label>Medical consultation fee</label><select data-k="fee" data-opts="fees" data-ph="Select"></select>
           <p class="help">Only shows in the email when picked.</p></div>
+        <div class="field"><label>Form</label><select data-k="form"></select></div>
+        <div class="field span-3"><label>Once payment is received</label><select data-k="afterPay" data-opts="afterPayOptions" data-ph="Select"></select></div>
       </div>
     </div>
 
@@ -216,7 +216,6 @@ button{font:inherit}
         <div class="field span-3"><label>To remit payment</label><textarea data-k="remit" rows="3" placeholder="How the patient should pay (optional)"></textarea></div>
         <div class="field span-3"><label>Payment link</label><input data-k="payUrl" type="url" placeholder="https://buy.stripe.com/...">
           <p class="help">Shows as a "Click here to remit payment" button.</p></div>
-        <div class="field span-3"><label>Once payment is received</label><textarea data-k="afterPay" rows="3" placeholder="What happens next, e.g. Your order will be released for fulfillment. (optional)"></textarea></div>
         <div class="field span-3 wl-only" hidden><label>Directions for use</label><input data-k="directions" placeholder="e.g. Take 2 capsules daily with food"></div>
         <div class="field span-3"><label>Comments</label><textarea data-k="comments" rows="3" placeholder="Anything else the patient should know (optional)"></textarea></div>
       </div>
@@ -284,10 +283,10 @@ const CONFIG = {
         programs: ['2mg', '4mg', '6mg', '8mg', '10mg', '12mg'] }
     ]},
     { group: 'Sermorelin', pharmacy: 'Hallandale Pharmacy', items: [
-      { name: 'Sermorelin (injectable)', form: 'Injectable', tag: FRIDGE,
-        programs: ['6mL', '12mL'] },
-      { name: 'Sermorelin (troches)', form: 'Troches',
-        programs: ['400mcg, 30ct.', '400mcg, 60ct.', '600mcg, 30ct.', '600mcg, 60ct.'] }
+      { name: 'Sermorelin', variants: [
+        { form: 'Injectable', tag: FRIDGE, programs: ['6mL', '12mL'] },
+        { form: 'Troches', programs: ['400mcg, 30ct.', '400mcg, 60ct.', '600mcg, 30ct.', '600mcg, 60ct.'] }
+      ] }
     ]},
     { group: 'Peptides, supplements and other', items: [
       { name: 'Glutathione', form: 'Injectable', tag: FRIDGE, programs: [
@@ -325,7 +324,13 @@ const CONFIG = {
     ]}
   ],
   pharmacies: ['Hallandale Pharmacy', 'Strive Pharmacy', 'Vios Compounding Pharmacy', 'The Chemist Shop', 'Wells Pharmacy', 'Striker Pharmacy'],
-  signatures: ['No Signature', 'Indirect Signature', 'Direct Signature'],
+  afterPayOptions: [
+    'We will schedule your medical consultation.',
+    'Your order will be released for fulfillment.',
+    'Your order will be placed on hold for a future ship date (as per your request).',
+    'We will request your order to be expedited.',
+    'A prescription will be sent to your pharmacy.'
+  ],
   wellnessGroup: 'Wellness & Vitality Collection',   // these products hide Supplies and show Benefits + Directions for use
   supplies: ['Syringes', 'Alcohol swabs', 'Syringes + alcohol swabs', 'N/A'],
   shipping: ['FedEx', 'UPS cold-pack', 'FedEx cold-pack', 'USPS'],
@@ -347,11 +352,11 @@ const PRODUCTS = CONFIG.catalog.flatMap(g => g.items.map(p => ({
   ...p,
   group: g.group,
   pharmacy: p.pharmacy || g.pharmacy || '',
-  programs: p.programs.map(x => (typeof x === 'string' ? { label: x } : x))
+  programs: (p.programs || []).map(x => (typeof x === 'string' ? { label: x } : x)),
+  variants: p.variants && p.variants.map(v => ({ ...v, programs: v.programs.map(x => (typeof x === 'string' ? { label: x } : x)) }))
 })));
 PRODUCTS.forEach((p, i) => { p.id = String(i); });
 CONFIG.benefits = [...new Set(PRODUCTS.map(p => p.benefit).filter(Boolean))];
-CONFIG.forms = [...new Set(PRODUCTS.map(p => p.form).filter(Boolean))];
 
 /* ---------- helpers ---------- */
 const $ = (s, r = document) => r.querySelector(s);
@@ -396,7 +401,7 @@ function applyDefaults() {
 
 
 function programUnit(p) {
-  if (!p) return 'mL / mg';
+  if (!p || !p.programs.length) return 'mL / mg';
   if (p.unit) return p.unit;
   const label = p.programs[0].label;
   if (/mL/.test(label)) return 'mL / mg';
@@ -405,31 +410,49 @@ function programUnit(p) {
 }
 
 // Medication/Others changed: rebuild Program, update its label, auto-fill Pharmacy
+function activeProduct() {   // the selected product, with the chosen Form's programs when it has several forms
+  const p = PRODUCTS[$('[data-k=med]').value];
+  if (!p || !p.variants) return p;
+  const v = p.variants.find(x => x.form === $('[data-k=form]').value);
+  return { ...p, form: v ? v.form : '', programs: v ? v.programs : [] };
+}
 function syncProduct() {
   const p = PRODUCTS[$('[data-k=med]').value];
-  const prog = $('[data-k=program]');
+  const f = $('[data-k=form]');
   if (p) {
-    fillSelect(prog, p.programs.map(x => x.label), p.programs.length > 1 ? 'Select' : undefined);
-    prog.disabled = false;
+    const forms = (p.variants ? p.variants.map(v => v.form) : [p.form]).filter(Boolean);
+    fillSelect(f, forms, forms.length > 1 ? 'Select' : undefined);
+    f.disabled = false;
   } else {
-    prog.innerHTML = '<option value="">Pick a medication first</option>';
-    prog.disabled = true;
+    f.innerHTML = '<option value="">Pick a medication first</option>';
+    f.disabled = true;
   }
-  $('.prog-label').textContent = `Program (${programUnit(p)})`;
-  const shared = p ? [...new Set(p.programs.map(x => x.pharmacy).filter(Boolean))] : [];
-  $('[data-k=pharmacy]').value = p ? (p.pharmacy || (shared.length === 1 ? shared[0] : '')) : '';
-  if (p && p.programs.length === 1) syncProgram();
-  $('[data-k=form]').value = p ? (p.form || '') : '';
+  syncForm();
   const wellness = !!p && p.group === CONFIG.wellnessGroup;
   $$('.wl-hide').forEach(el => { el.hidden = wellness; });
   $$('.wl-only').forEach(el => { el.hidden = !wellness; });
   if (wellness) { $('[data-k=supplies]').value = ''; $('[data-k=benefit]').value = p.benefit || ''; }
   else { $('[data-k=benefit]').value = ''; $('[data-k=directions]').value = ''; }
 }
-
+// Medication or Form changed: rebuild Program, update its label, auto-fill Pharmacy
+function syncForm() {
+  const p = activeProduct();
+  const prog = $('[data-k=program]');
+  if (p && p.programs.length) {
+    fillSelect(prog, p.programs.map(x => x.label), p.programs.length > 1 ? 'Select' : undefined);
+    prog.disabled = false;
+  } else {
+    prog.innerHTML = `<option value="">${p ? 'Pick a form first' : 'Pick a medication first'}</option>`;
+    prog.disabled = true;
+  }
+  $('.prog-label').textContent = `Program (${programUnit(p)})`;
+  const shared = p ? [...new Set(p.programs.map(x => x.pharmacy).filter(Boolean))] : [];
+  $('[data-k=pharmacy]').value = p ? (p.pharmacy || (shared.length === 1 ? shared[0] : '')) : '';
+  if (p && p.programs.length === 1) syncProgram();
+}
 // Program changed: some programs (e.g. NAD+) ship from a specific pharmacy
 function syncProgram() {
-  const p = PRODUCTS[$('[data-k=med]').value];
+  const p = activeProduct();
   const pr = p && p.programs.find(x => x.label === $('[data-k=program]').value);
   if (pr && pr.pharmacy) $('[data-k=pharmacy]').value = pr.pharmacy;
 }
@@ -549,7 +572,6 @@ function buildEmailBody(s) {
     ['Supplies', wellness ? '' : s.supplies],
     ['Shipping', s.shipping],
     ['Number of shipments', s.shipments],
-    ['Signature', s.signature],
     ['Medical consultation fee', s.fee]      // only appears when picked
   ]);
   const payUrl = safeUrl(s.payUrl);
@@ -758,6 +780,7 @@ formCol.addEventListener('input', e => {
 });
 formCol.addEventListener('change', e => {
   if (e.target.dataset.k === 'med') syncProduct();
+  if (e.target.dataset.k === 'form') syncForm();
   if (e.target.dataset.k === 'program') syncProgram();
   render();
 });
