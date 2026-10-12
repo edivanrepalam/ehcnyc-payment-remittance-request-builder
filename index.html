@@ -193,30 +193,38 @@ button{font:inherit}
   <section class="form-col">
 
     <div class="card glass">
-      <div class="card-head"><h2>Patient and payment details</h2></div>
+      <div class="card-head"><h2>Patient details</h2></div>
       <div class="grid">
         <div class="field span-3"><label>Patient name <span class="req">*</span></label><input data-k="name" placeholder="e.g. Jane Doe" autocomplete="off"></div>
-        <div class="field span-2"><label>Medication/Others</label><select data-k="med"></select></div>
-        <div class="field"><label class="prog-label">Program (mL / mg)</label><select data-k="program"></select></div>
-        <div class="field"><label>Pharmacy</label><select data-k="pharmacy" data-opts="pharmacies" data-ph="Select"></select></div>
-        <div class="field wl-hide"><label>Supplies</label><select data-k="supplies" data-opts="supplies" data-ph="Select"></select></div>
-        <div class="field wl-only" hidden><label>Benefits</label><select data-k="benefit" data-opts="benefits" data-ph="Select"></select></div>
-        <div class="field"><label>Shipping</label><select data-k="shipping" data-opts="shipping" data-ph="Select"></select></div>
-        <div class="field hl"><label># of shipments</label><input data-k="shipments" type="number" min="0" placeholder="e.g. 2"></div>
-        <div class="field"><label>Medical consultation fee</label><select data-k="fee" data-opts="fees" data-ph="Select"></select>
-          <p class="help">Only shows in the email when picked.</p></div>
-        <div class="field"><label>Form</label><select data-k="form"></select></div>
-        <div class="field span-3"><label>Once payment is received</label><select data-k="afterPay" data-opts="afterPayOptions" data-ph="Select"></select></div>
       </div>
+    </div>
+
+    <div class="card glass">
+      <div class="card-head"><h2>Orders</h2><span class="count" id="itemCount">1 order</span></div>
+      <div id="items"></div>
+      <button type="button" class="btn btn-add" id="addItem">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Add another order
+      </button>
+      <p class="help center">Each order shows as its own block under "Please find the details below" in the email.</p>
     </div>
 
     <div class="card glass">
       <div class="card-head"><h2>Payment</h2></div>
       <div class="grid">
+        <div class="field"><label>Medical consultation fee</label><select data-k="fee" data-opts="fees" data-ph="Select"></select>
+          <p class="help">Only shows in the email when picked. Charged once, not per order.</p></div>
+        <div class="field span-3"><label>Provider contact (prefilled, editable)</label><textarea data-k="providerContact" class="two-line" rows="2" placeholder="e.g. A provider will contact you on MM/DD/YYYY between 7:00pm &amp; 7:30pm for your medical consultation."></textarea>
+          <p class="help">Shows under the "Your medical clearance has expired." section (with its notice), above "Once payment is received". Fill in the blanks each time; clear it to hide the whole section.</p></div>
+        <div class="field span-3"><label>Once payment is received (select all that apply)</label>
+          <div class="multi" id="afterPayMulti" data-count>
+            <button type="button" class="multi-btn" aria-haspopup="true" aria-expanded="false"><span class="multi-val empty">Select</span></button>
+            <div class="multi-menu glass" hidden></div>
+          </div>
+          <p class="help">Each one you pick shows as its own line under "Once payment is received" in the email. The section stays hidden until you pick one.</p></div>
         <div class="field span-3"><label>To remit payment</label><textarea data-k="remit" rows="3" placeholder="How the patient should pay (optional)"></textarea></div>
         <div class="field span-3"><label>Payment link</label><input data-k="payUrl" type="url" placeholder="https://buy.stripe.com/...">
           <p class="help">Shows as a "Click here to remit payment" button.</p></div>
-        <div class="field span-3 wl-only" hidden><label>Directions for use</label><input data-k="directions" placeholder="e.g. Take 2 capsules daily with food"></div>
         <div class="field span-3"><label>Comments</label><textarea data-k="comments" rows="3" placeholder="Anything else the patient should know (optional)"></textarea></div>
       </div>
     </div>
@@ -255,6 +263,34 @@ button{font:inherit}
 
 <div class="toast glass" id="toast" role="status" aria-live="polite"></div>
 
+<template id="itemTpl">
+  <div class="item">
+    <div class="item-head">
+      <div class="item-title"><span>Order <span class="n">1</span></span><span class="ph-badge med-badge" hidden></span></div>
+      <div class="item-actions">
+        <button type="button" class="icon-btn" data-act="dup" title="Duplicate order" aria-label="Duplicate order">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+        <button type="button" class="icon-btn danger" data-act="del" title="Remove order" aria-label="Remove order">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="field span-2"><label>Medication/Others</label><select data-f="med"></select></div>
+      <div class="field"><label class="prog-label">Program (mL / mg)</label><select data-f="program"></select></div>
+      <div class="field"><label>Pharmacy</label><select data-f="pharmacy" data-opts="pharmacies" data-ph="Select"></select></div>
+      <div class="field wl-hide"><label>Supplies</label><select data-f="supplies" data-opts="supplies" data-ph="Select"></select></div>
+      <div class="field wl-only" hidden><label>Benefits</label><select data-f="benefit" data-opts="benefits" data-ph="Select"></select></div>
+      <div class="field"><label>Shipping</label><select data-f="shipping" data-opts="shipping" data-ph="Select"></select></div>
+      <div class="field hl"><label># of shipments</label><input data-f="shipments" type="number" min="0" placeholder="e.g. 2"></div>
+      <div class="field"><label>Form</label><select data-f="form"></select></div>
+      <div class="field"><label>Total</label><div class="money"><span>$</span><input data-f="total" type="number" min="0" step="0.01" placeholder="0.00"></div></div>
+      <div class="field span-3 wl-only" hidden><label>Directions for use</label><input data-f="directions" placeholder="e.g. Take 2 capsules daily with food"></div>
+    </div>
+  </div>
+</template>
+
 <script>
 /* ============================================================
    CONFIG: forms (with their links), signature, notice
@@ -266,6 +302,8 @@ const CONFIG = {
   logoData: 'data:image/png;base64,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',
   logoUrl: '',            // hosted https logo; overrides logoData in the email when set
   replySubject: 're: Payment Remittance Request',   // subject of the patient's reply (body is left empty)
+  shippingRate: 35,       // $ per shipment, added to the big Total in the email
+  providerContactMessage: 'A provider will contact you on ______ between ______ & _______ for your medical consultation.',   // prefilled; shown under "Your medical clearance has expired."
   // Medication/Others, Program and Pharmacy work exactly like the Order Confirmation builder
   catalog: [
     { group: 'Weight loss', items: [
@@ -329,7 +367,8 @@ const CONFIG = {
     'Your order will be released for fulfillment.',
     'Your order will be placed on hold for a future ship date (as per your request).',
     'We will request your order to be expedited.',
-    'A prescription will be sent to your pharmacy.'
+    'A prescription will be sent to your pharmacy.',
+    'Your order will be sent for fulfillment.'
   ],
   wellnessGroup: 'Wellness & Vitality Collection',   // these products hide Supplies and show Benefits + Directions for use
   supplies: ['Syringes', 'Alcohol swabs', 'Syringes + alcohol swabs', 'N/A'],
@@ -380,6 +419,12 @@ const fmtMoney = v => {
   const n = Number(v);
   return isNaN(n) ? v : '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
+// Whole dollars show without cents ($45); anything else keeps two decimals ($45.50)
+const fmtDollars = v => {
+  if (v === '' || v == null || isNaN(Number(v))) return '';
+  const n = Number(v);
+  return '$' + n.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 });
+};
 const todayISO = () => {
   const d = new Date();
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
@@ -390,14 +435,21 @@ function fillSelect(sel, list, ph) {
     list.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
 }
 /* ---------- form ---------- */
+// Shared fields only (patient name, fee, once payment is received, payment, comments).
+// Each order block is filled by addItem().
 function applyDefaults() {
   $$('[data-k]').forEach(el => { el.value = ''; });
-  $$('select[data-opts]').forEach(sel => fillSelect(sel, CONFIG[sel.dataset.opts], sel.dataset.ph));
-  $('[data-k=med]').innerHTML = '<option value="">Select</option>' + CONFIG.catalog.map(g =>
-    `<optgroup label="${esc(g.group)}">${PRODUCTS.filter(p => p.group === g.group).map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('')}</optgroup>`).join('');
-  syncProduct();
+  $$('select[data-k][data-opts]').forEach(sel => fillSelect(sel, CONFIG[sel.dataset.opts], sel.dataset.ph));
+  $('[data-k=providerContact]').value = CONFIG.providerContactMessage;
+  const ap = $('#afterPayMulti');            // multi-select: rebuilding the menu also clears every tick
+  $('.multi-menu', ap).innerHTML = CONFIG.afterPayOptions.map(v =>
+    `<label class="multi-opt"><input type="checkbox" value="${esc(v)}"><span>${esc(v)}</span></label>`).join('');
+  syncMulti(ap);
+  closeMenus();
   $$('.field.invalid').forEach(f => f.classList.remove('invalid'));
 }
+const medOptions = () => '<option value="">Select</option>' + CONFIG.catalog.map(g =>
+  `<optgroup label="${esc(g.group)}">${PRODUCTS.filter(p => p.group === g.group).map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('')}</optgroup>`).join('');
 
 
 function programUnit(p) {
@@ -410,15 +462,17 @@ function programUnit(p) {
 }
 
 // Medication/Others changed: rebuild Program, update its label, auto-fill Pharmacy
-function activeProduct() {   // the selected product, with the chosen Form's programs when it has several forms
-  const p = PRODUCTS[$('[data-k=med]').value];
+// Every order block (.item) runs these on its own fields, so several orders never affect each other.
+const F$ = (node, k) => $(`[data-f=${k}]`, node);
+function activeProduct(node) {   // the selected product, with the chosen Form's programs when it has several forms
+  const p = PRODUCTS[F$(node, 'med').value];
   if (!p || !p.variants) return p;
-  const v = p.variants.find(x => x.form === $('[data-k=form]').value);
+  const v = p.variants.find(x => x.form === F$(node, 'form').value);
   return { ...p, form: v ? v.form : '', programs: v ? v.programs : [] };
 }
-function syncProduct() {
-  const p = PRODUCTS[$('[data-k=med]').value];
-  const f = $('[data-k=form]');
+function syncProduct(node) {
+  const p = PRODUCTS[F$(node, 'med').value];
+  const f = F$(node, 'form');
   if (p) {
     const forms = (p.variants ? p.variants.map(v => v.form) : [p.form]).filter(Boolean);
     fillSelect(f, forms, forms.length > 1 ? 'Select' : undefined);
@@ -427,17 +481,20 @@ function syncProduct() {
     f.innerHTML = '<option value="">Pick a medication first</option>';
     f.disabled = true;
   }
-  syncForm();
+  syncForm(node);
   const wellness = !!p && p.group === CONFIG.wellnessGroup;
-  $$('.wl-hide').forEach(el => { el.hidden = wellness; });
-  $$('.wl-only').forEach(el => { el.hidden = !wellness; });
-  if (wellness) { $('[data-k=supplies]').value = ''; $('[data-k=benefit]').value = p.benefit || ''; }
-  else { $('[data-k=benefit]').value = ''; $('[data-k=directions]').value = ''; }
+  $$('.wl-hide', node).forEach(el => { el.hidden = wellness; });
+  $$('.wl-only', node).forEach(el => { el.hidden = !wellness; });
+  if (wellness) { F$(node, 'supplies').value = ''; F$(node, 'benefit').value = p.benefit || ''; }
+  else { F$(node, 'benefit').value = ''; F$(node, 'directions').value = ''; }
+  const badge = $('.med-badge', node);
+  badge.textContent = p ? p.name : '';
+  badge.hidden = !p;
 }
 // Medication or Form changed: rebuild Program, update its label, auto-fill Pharmacy
-function syncForm() {
-  const p = activeProduct();
-  const prog = $('[data-k=program]');
+function syncForm(node) {
+  const p = activeProduct(node);
+  const prog = F$(node, 'program');
   if (p && p.programs.length) {
     fillSelect(prog, p.programs.map(x => x.label), p.programs.length > 1 ? 'Select' : undefined);
     prog.disabled = false;
@@ -445,23 +502,56 @@ function syncForm() {
     prog.innerHTML = `<option value="">${p ? 'Pick a form first' : 'Pick a medication first'}</option>`;
     prog.disabled = true;
   }
-  $('.prog-label').textContent = `Program (${programUnit(p)})`;
+  $('.prog-label', node).textContent = `Program (${programUnit(p)})`;
   const shared = p ? [...new Set(p.programs.map(x => x.pharmacy).filter(Boolean))] : [];
-  $('[data-k=pharmacy]').value = p ? (p.pharmacy || (shared.length === 1 ? shared[0] : '')) : '';
-  if (p && p.programs.length === 1) syncProgram();
+  F$(node, 'pharmacy').value = p ? (p.pharmacy || (shared.length === 1 ? shared[0] : '')) : '';
+  if (p && p.programs.length === 1) syncProgram(node);
 }
 // Program changed: some programs (e.g. NAD+) ship from a specific pharmacy
-function syncProgram() {
-  const p = activeProduct();
-  const pr = p && p.programs.find(x => x.label === $('[data-k=program]').value);
-  if (pr && pr.pharmacy) $('[data-k=pharmacy]').value = pr.pharmacy;
+function syncProgram(node) {
+  const p = activeProduct(node);
+  const pr = p && p.programs.find(x => x.label === F$(node, 'program').value);
+  if (pr && pr.pharmacy) F$(node, 'pharmacy').value = pr.pharmacy;
+}
+
+/* ---------- orders (one block per medication) ---------- */
+function readItem(node) {
+  const o = {};
+  $$('[data-f]', node).forEach(el => { o[el.dataset.f] = el.value.trim(); });
+  const p = PRODUCTS[o.med];
+  o.medName = p ? p.name : '';
+  o.wellness = !!p && p.group === CONFIG.wellnessGroup;
+  return o;
+}
+
+function renumber() {
+  const items = $$('#items .item');
+  items.forEach((n, i) => { $('.n', n).textContent = i + 1; });
+  $('#itemCount').textContent = `${items.length} order${items.length === 1 ? '' : 's'}`;
+}
+
+// data = a previous readItem() result (used by Duplicate); empty for a new blank order
+function addItem(data = {}) {
+  const node = $('#itemTpl').content.firstElementChild.cloneNode(true);
+  $$('select[data-opts]', node).forEach(sel => fillSelect(sel, CONFIG[sel.dataset.opts], sel.dataset.ph));
+  F$(node, 'med').innerHTML = medOptions();
+  $('#items').appendChild(node);
+  F$(node, 'med').value = data.med || '';
+  syncProduct(node);                                        // builds Form + Program + Pharmacy for this product
+  if (data.form) { F$(node, 'form').value = data.form; syncForm(node); }
+  if (data.program) { F$(node, 'program').value = data.program; syncProgram(node); }
+  ['pharmacy', 'supplies', 'benefit', 'shipping', 'shipments', 'total', 'directions'].forEach(k => {
+    if (data[k] !== undefined && data[k] !== '') F$(node, k).value = data[k];
+  });
+  renumber();
+  return node;
 }
 
 function readState() {
   const s = {};
   $$('[data-k]').forEach(el => { s[el.dataset.k] = el.value.trim(); });
-  const p = PRODUCTS[s.med];
-  s.medName = p ? p.name : '';
+  s.afterPay = $$('#afterPayMulti input:checked').map(c => c.value);   // every pick, in menu order
+  s.items = $$('#items .item').map(readItem);
   return s;
 }
 
@@ -550,6 +640,47 @@ ${line(a('https://' + S.website, S.website, true))}
 </td></tr>`;
 }
 
+/* ---------- big Total ----------
+   Total = each order's Total + shipping (CONFIG.shippingRate x # of shipments, per order) + medical consultation fee.
+   Same rules as the Order Summary Builder: an order counts once its Total is entered, and a blank
+   # of shipments counts as 1. Nothing shows until at least one order Total is entered. */
+const centsOf = v => (v !== '' && v != null && !isNaN(Number(v)) ? Math.round(Number(v) * 100) : 0);
+const billedItems = items => items.filter(i => i.total !== '' && i.total != null && !isNaN(Number(i.total)));
+const shipmentCount = it => Math.max(1, parseInt(it.shipments, 10) || 1);
+
+function calcTotals(s) {
+  const billed = billedItems(s.items || []);
+  if (!billed.length) return null;
+  const rate = centsOf(CONFIG.shippingRate);
+  const sub = billed.reduce((a, i) => a + centsOf(i.total), 0);
+  const shipments = billed.reduce((a, i) => a + shipmentCount(i), 0);
+  const ship = rate * shipments;
+  const fee = centsOf(String(s.fee || '').replace(/[^0-9.]/g, ''));   // "$45" -> 45
+  return { sub: sub / 100, shipments, rate: rate / 100, ship: ship / 100, fee: fee / 100, total: (sub + ship + fee) / 100 };
+}
+
+function totalPanel(t) {
+  const rows = [];
+  if (t.ship > 0 || t.fee > 0) rows.push(['Subtotal', fmtDollars(t.sub)]);
+  if (t.ship > 0) rows.push([`Shipping (${t.shipments} shipment${t.shipments === 1 ? '' : 's'} × ${fmtDollars(t.rate)})`, fmtDollars(t.ship)]);
+  if (t.fee > 0) rows.push(['Medical consultation fee', fmtDollars(t.fee)]);
+  const lines = rows.map(([k, v], i) => {
+    const top = i ? `border-top:1px solid ${C.line};` : '';
+    return `<tr>
+<td valign="top" style="padding:10px 16px;${top}font-family:${F};font-size:13px;line-height:19px;color:${C.muted};">${esc(k)}</td>
+<td align="right" valign="top" style="padding:10px 16px;${top}font-family:${F};font-size:14px;line-height:19px;font-weight:600;color:${C.ink};white-space:nowrap;">${esc(v)}</td>
+</tr>`;
+  }).join('');
+  const top = rows.length ? `border-top:1px solid ${C.hlLine};` : '';
+  const rl = rows.length ? '0 0 0 13px' : '13px 0 0 13px';
+  const rr = rows.length ? '0 0 13px 0' : '0 13px 13px 0';
+  const big = `<tr>
+<td valign="middle" bgcolor="${C.hl}" style="padding:16px;${top}background-color:${C.hl};border-radius:${rl};font-family:${F};font-size:16px;line-height:22px;font-weight:800;color:${C.navy};">Total</td>
+<td align="right" valign="middle" bgcolor="${C.hl}" style="padding:16px;${top}background-color:${C.hl};border-radius:${rr};font-family:${F};font-size:16px;line-height:22px;font-weight:800;color:${C.navy};white-space:nowrap;">${esc(fmtMoney(t.total))}</td>
+</tr>`;
+  return spacer(16) + panel(lines + big);
+}
+
 function textPanel(text, tint) {
   return `<tr><td style="padding:0 30px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${tint ? C.hl : C.panel}" style="border-collapse:separate;background-color:${tint ? C.hl : C.panel};border:1px solid ${tint ? C.hlLine : C.line};border-radius:14px;">
@@ -562,28 +693,46 @@ function buildEmailBody(s) {
   const logo = `<img src="${esc(logoSrc)}" alt="EHCNYC Elite Health Center NYC" width="140" style="display:block;width:140px;max-width:140px;height:auto;border:0;outline:none;text-decoration:none;">`;
   const P = (html, pt = 12) => `<div style="font-size:15px;line-height:23px;color:${C.muted};padding-top:${pt}px;">${html}</div>`;
 
-  const wellness = (PRODUCTS[s.med] || {}).group === CONFIG.wellnessGroup;
-  const details = kvPanel([
-    ['Medication/Others', s.medName],
-    ['Form', s.form],
-    ['Benefits', wellness ? s.benefit : ''],
-    ['Program', (s.program || '').replace(/-/g, '\u2011')],   // non-breaking hyphen keeps "2mL-20mg" together
-    ['Pharmacy', s.pharmacy],
-    ['Supplies', wellness ? '' : s.supplies],
-    ['Shipping', s.shipping],
-    ['Number of shipments', s.shipments],
-    ['Medical consultation fee', s.fee]      // only appears when picked
-  ]);
+  // One panel per order. With a single order the email looks exactly as before; with several,
+  // each gets an "Order N" heading and the consultation fee (charged once) goes in its own panel last.
+  const orderRows = (it, fee) => [
+    ['Medication/Others', it.medName],
+    ['Form', it.form],
+    ['Benefits', it.wellness ? it.benefit : ''],
+    ['Program', (it.program || '').replace(/-/g, '\u2011')],   // non-breaking hyphen keeps "2mL-20mg" together
+    ['Pharmacy', it.pharmacy],
+    ['Supplies', it.wellness ? '' : it.supplies],
+    ['Shipping', it.shipping],
+    ['Number of shipments', it.shipments],
+    ['Total', it.total !== '' && it.total != null ? fmtDollars(it.total) : '']   // only appears when entered
+  ].concat(fee ? [['Medical consultation fee', fee]] : []);      // fee only appears when picked
+  const items = s.items || [];
+  const totals = calcTotals(s);      // null until at least one order Total is entered
+  const feeInDetails = totals ? '' : s.fee;   // with a big Total, the consultation fee shows once, in its breakdown
+  const filled = items.filter(it => kvPanel(orderRows(it)));     // skip orders with nothing filled in
+  const multi = filled.length > 1;
+  const details = multi
+    ? filled.map((it, i) => heading(`Order ${i + 1}`) + kvPanel(orderRows(it))).join('\n') +
+      (feeInDetails ? spacer(16) + kvPanel([['Medical consultation fee', feeInDetails]]) : '')
+    : kvPanel(orderRows(filled[0] || items[0] || {}, feeInDetails));
   const payUrl = safeUrl(s.payUrl);
   const remit = (s.remit || payUrl) ? `${heading('To remit payment')}
 ${s.remit ? textPanel(s.remit, false) : ''}
 ${payUrl ? spacer(s.remit ? 16 : 0) + button(payUrl, 'Click here to remit payment', true) : ''}` : '';
-  const after = s.afterPay ? `${heading('Once payment is received')}
-${textPanel(s.afterPay, true)}` : '';
+  // Clearance section: heading + fixed notice + the editable provider-contact sentence (clear the field to hide the section)
+  const clearance = s.providerContact ? `${heading('Your medical clearance has expired.')}
+${textPanel('We will need to schedule a medical consultation to update your clearance in our system.', true)}
+${spacer(12)}
+${textPanel(s.providerContact, false)}
+` : '';
+  const afterPicks = s.afterPay || [];     // each pick shows as its own line
+  const after = afterPicks.length ? `${heading('Once payment is received')}
+${textPanel(afterPicks.join('\n'), true)}` : '';
   const comments = s.comments ? `${heading('Comments')}
 ${textPanel(s.comments, false)}` : '';
-  const directions = wellness && s.directions ? `${heading('Directions for use')}
-${textPanel(s.directions, false)}` : '';
+  const dirs = items.filter(it => it.wellness && it.directions);
+  const directions = dirs.length ? `${heading('Directions for use')}
+${textPanel(dirs.length === 1 && !multi ? dirs[0].directions : dirs.map(d => `${d.medName}: ${d.directions}`).join('\n'), false)}` : '';
   const replyHref = `mailto:${CONFIG.signature.email}?subject=${encodeURIComponent(CONFIG.replySubject)}`;
 
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.page}" style="background-color:${C.page};background-image:linear-gradient(160deg,#d3eaf2 0%,#eef6f9 45%,#d8e9ef 100%);">
@@ -598,12 +747,13 @@ ${textPanel(s.directions, false)}` : '';
 
 <tr><td style="padding:26px 30px 0;font-family:${F};">
 <div style="font-size:18px;line-height:24px;font-weight:700;color:${C.ink};">Dear ${esc(s.name || 'Patient')},</div>
-${P('We are reaching out regarding the payment due.', 10)}
+${P('Welcome back to Elite Health Center NYC!')}
+${P('We received your refill request form.', 10)}
 ${details ? P('Please find the details below:') : ''}
 </td></tr>
-${details ? spacer(12) + details : ''}
+${details ? (multi ? '' : spacer(12)) + details : ''}${totals ? totalPanel(totals) : ''}
 ${remit}
-${after}
+${clearance}${after}
 
 <tr><td style="padding:26px 30px 0;font-family:${F};">
 ${P('If you have any questions or need support, please click the button below to respond to this email.', 0)}
@@ -670,6 +820,9 @@ function validate() {
   const flag = (el, label) => { el.closest('.field').classList.add('invalid'); miss.push(label); };
   const name = $('[data-k=name]'), link = $('[data-k=payUrl]');
   if (!name.value.trim()) flag(name, 'patient name');
+  // with several orders, each one needs a medication (otherwise it would be left out of the email)
+  const nodes = $$('#items .item');
+  if (nodes.length > 1) nodes.forEach((n, i) => { if (!F$(n, 'med').value) flag(F$(n, 'med'), `medication for order ${i + 1}`); });
   if (link.value.trim() && !safeUrl(link.value.trim())) flag(link, 'full https payment link');
   return miss;
 }
@@ -761,6 +914,8 @@ $('#download').addEventListener('click', () => {
 $('#reset').addEventListener('click', () => {
   if (!confirm('Clear the form and start a new payment request?')) return;
   applyDefaults();
+  $('#items').innerHTML = '';
+  addItem();
   render();
   window.scrollTo({ top: 0, behavior: 'smooth' });
   toast('Form cleared');
@@ -771,6 +926,66 @@ $$('.device button').forEach(b => b.addEventListener('click', () => {
   frame.style.width = b.dataset.w;
 }));
 
+/* ---------- multi-select dropdown (Once payment is received) ---------- */
+function syncMulti(multi) {
+  const picked = $$('input:checked', multi).map(c => c.value);
+  const val = $('.multi-val', multi);
+  val.textContent = picked.length ? (multi.hasAttribute('data-count') ? picked.length + ' selected' : picked.join(', ')) : 'Select';
+  val.classList.toggle('empty', !picked.length);
+}
+function closeMenus(except) {
+  $$('.multi').forEach(m => {
+    if (m === except) return;
+    $('.multi-menu', m).hidden = true;
+    $('.multi-btn', m).setAttribute('aria-expanded', 'false');
+    const card = m.closest('.card');
+    if (card) card.classList.remove('menu-open');
+  });
+}
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.multi-btn');
+  if (btn) {
+    const multi = btn.closest('.multi'), menu = $('.multi-menu', multi);
+    const open = menu.hidden;
+    closeMenus(multi);
+    menu.hidden = !open;
+    btn.setAttribute('aria-expanded', String(open));
+    multi.closest('.card').classList.toggle('menu-open', open);   // lift above the cards below
+    if (open) { const first = $('input', menu); if (first) first.focus(); }
+    return;
+  }
+  if (!e.target.closest('.multi-menu')) closeMenus();
+});
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  const open = $$('.multi').find(m => !$('.multi-menu', m).hidden);
+  if (open) { closeMenus(); $('.multi-btn', open).focus(); }
+});
+
+/* ---------- order events ---------- */
+$('#addItem').addEventListener('click', () => {
+  const n = addItem();
+  render();
+  n.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  F$(n, 'med').focus({ preventScroll: true });
+});
+
+$('#items').addEventListener('click', e => {
+  const btn = e.target.closest('[data-act]');
+  if (!btn) return;
+  const item = btn.closest('.item');
+  if (btn.dataset.act === 'dup') {
+    const copy = addItem(readItem(item));
+    item.after(copy);
+  } else if (btn.dataset.act === 'del') {
+    const only = $$('#items .item').length === 1;
+    item.remove();
+    if (only) addItem();
+  }
+  renumber();
+  render();
+});
+
 /* ---------- live updates ---------- */
 const formCol = $('.form-col');
 formCol.addEventListener('input', e => {
@@ -779,15 +994,19 @@ formCol.addEventListener('input', e => {
   render();
 });
 formCol.addEventListener('change', e => {
-  if (e.target.dataset.k === 'med') syncProduct();
-  if (e.target.dataset.k === 'form') syncForm();
-  if (e.target.dataset.k === 'program') syncProgram();
+  const node = e.target.closest('.item');
+  if (node && e.target.dataset.f === 'med') syncProduct(node);
+  if (node && e.target.dataset.f === 'form') syncForm(node);
+  if (node && e.target.dataset.f === 'program') syncProgram(node);
+  const multi = e.target.closest('.multi');
+  if (multi) syncMulti(multi);
   render();
 });
 
 /* ---------- init ---------- */
 $('.brand-logo').src = CONFIG.logoData;
 applyDefaults();
+addItem();
 render();
 </script>
 </body>
