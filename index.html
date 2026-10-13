@@ -754,8 +754,8 @@ ${textPanel(dirs.length === 1 && !multi ? dirs[0].directions : dirs.map(d => `${
 
 <tr><td style="padding:26px 30px 0;font-family:${F};">
 <div style="font-size:18px;line-height:24px;font-weight:700;color:${C.ink};">Dear ${esc(s.name || 'Patient')},</div>
-${P('Welcome back to Elite Health Center NYC!')}
-${P('We received your refill request form.', 10)}
+${P('Thank you for choosing Elite Health Center NYC!')}
+<div style="font-size:15px;line-height:23px;font-style:italic;color:${C.accentDark};padding-top:2px;">${esc(CONFIG.tagline)}</div>
 ${details ? P('Please find the details below:') : ''}
 </td></tr>
 ${details ? (multi ? '' : spacer(12)) + details : ''}${totals ? totalPanel(totals) : ''}
