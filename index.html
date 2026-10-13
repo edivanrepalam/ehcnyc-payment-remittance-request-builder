@@ -296,6 +296,7 @@ button{font:inherit}
    CONFIG: forms (with their links), signature, notice
    ============================================================ */
 const FRIDGE = 'Keep refrigerated';
+const COOL_DRY = 'Store in a cool, dry place (away from heat, moisture & sunlight).';
 const CONFIG = {
   clinicName: 'Elite Health Center NYC',
   tagline: "New York's Premier Online Weight Loss Clinic",
@@ -340,7 +341,7 @@ const CONFIG = {
         { label: '5mL (10mg/mL)', pharmacy: 'Striker Pharmacy' }] },
       { name: 'Glow: GHK-Cu, BPC-157 & TB-500', form: 'Injectable', tag: FRIDGE, programs: [
         { label: '3mL (9mg/1.66mg/3.33mg/mL)', pharmacy: 'Striker Pharmacy' }] },
-      { name: 'Bioboost Plus', form: 'Injectable', tag: FRIDGE, programs: [
+      { name: 'Bioboost Plus', form: 'Injectable', tag: COOL_DRY, programs: [
         { label: '10mL', pharmacy: 'Hallandale Pharmacy' },
         { label: '30mL', pharmacy: 'Hallandale Pharmacy' }] },
       { name: 'MICB12', form: 'Gel Troches', programs: ['30 troches'] }
@@ -520,6 +521,7 @@ function readItem(node) {
   $$('[data-f]', node).forEach(el => { o[el.dataset.f] = el.value.trim(); });
   const p = PRODUCTS[o.med];
   o.medName = p ? p.name : '';
+  o.coolDry = !!p && p.tag === COOL_DRY;
   o.wellness = !!p && p.group === CONFIG.wellnessGroup;
   return o;
 }
@@ -580,6 +582,11 @@ function panel(innerRows) {
   return `<tr><td style="padding:0 30px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;background-color:${C.panel};border:1px solid ${C.line};border-radius:14px;box-shadow:inset 0 1px 0 #ffffff,0 4px 14px rgba(9,46,57,0.05);">${innerRows}</table>
 </td></tr>`;
+}
+
+// Bioboost Plus storage note: sage green pill (no icon) shown next to the product name.
+function coolDryPill() {
+  return `<span style="display:inline-block;white-space:normal;margin:6px 0 0 0;padding:3px 10px;border-radius:12px;background-color:#e6f3e8;border:1px solid #c4e0c9;font-family:${F};font-size:11px;line-height:16px;font-weight:700;color:#27613a;">${esc(COOL_DRY)}</span>`;
 }
 
 function kvPanel(rows) {
@@ -696,7 +703,7 @@ function buildEmailBody(s) {
   // One panel per order. With a single order the email looks exactly as before; with several,
   // each gets an "Order N" heading and the consultation fee (charged once) goes in its own panel last.
   const orderRows = (it, fee) => [
-    ['Medication/Others', it.medName],
+    ['Medication/Others', it.medName ? esc(it.medName) + (it.coolDry ? '<div>' + coolDryPill() + '</div>' : '') : '', true],
     ['Form', it.form],
     ['Benefits', it.wellness ? it.benefit : ''],
     ['Program', (it.program || '').replace(/-/g, '\u2011')],   // non-breaking hyphen keeps "2mL-20mg" together
