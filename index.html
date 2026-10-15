@@ -648,19 +648,36 @@ ${line(a('https://' + S.website, S.website, true))}
 }
 
 /* ---------- big Total ----------
-   Total = each order's Total + shipping (CONFIG.shippingRate x # of shipments, per order) + medical consultation fee.
-   Same rules as the Order Summary Builder: an order counts once its Total is entered, and a blank
-   # of shipments counts as 1. Nothing shows until at least one order Total is entered. */
+   Total = each order's Total + shipping (CONFIG.shippingRate x shipments) + medical consultation fee.
+   An order counts once its Total is entered, and a blank # of shipments counts as 1.
+   Orders going to the SAME pharmacy travel together, so they are one shipment, not one each (see shipmentsFor).
+   Nothing shows until at least one order Total is entered. */
 const centsOf = v => (v !== '' && v != null && !isNaN(Number(v)) ? Math.round(Number(v) * 100) : 0);
 const billedItems = items => items.filter(i => i.total !== '' && i.total != null && !isNaN(Number(i.total)));
 const shipmentCount = it => Math.max(1, parseInt(it.shipments, 10) || 1);
+
+// Shipments to charge for. Orders from the same pharmacy ship together, so each pharmacy counts once:
+// its shipments = the highest "# of shipments" among its orders (1 each -> 1 in total; an order that has to be
+// split into 3 still gets 3, and the other orders from that pharmacy ride along).
+// An order with no pharmacy picked can't be matched to another one, so it counts on its own.
+function shipmentsFor(billed) {
+  const perPharmacy = new Map();
+  let unmatched = 0;
+  billed.forEach(i => {
+    const key = String(i.pharmacy || '').trim().toLowerCase();
+    const n = shipmentCount(i);
+    if (!key) unmatched += n;
+    else perPharmacy.set(key, Math.max(perPharmacy.get(key) || 0, n));
+  });
+  return unmatched + [...perPharmacy.values()].reduce((a, n) => a + n, 0);
+}
 
 function calcTotals(s) {
   const billed = billedItems(s.items || []);
   if (!billed.length) return null;
   const rate = centsOf(CONFIG.shippingRate);
   const sub = billed.reduce((a, i) => a + centsOf(i.total), 0);
-  const shipments = billed.reduce((a, i) => a + shipmentCount(i), 0);
+  const shipments = shipmentsFor(billed);
   const ship = rate * shipments;
   const fee = centsOf(String(s.fee || '').replace(/[^0-9.]/g, ''));   // "$45" -> 45
   return { sub: sub / 100, shipments, rate: rate / 100, ship: ship / 100, fee: fee / 100, total: (sub + ship + fee) / 100 };
